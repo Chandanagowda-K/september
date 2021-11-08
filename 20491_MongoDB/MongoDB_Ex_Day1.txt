@@ -1,0 +1,432 @@
+show dbs
+show collections
+use mydb
+
+
+db.movie.insert({"name":"3 idiots", "actor":"Amir"})
+db.movie.insert({"_id":0001,"name":"3 idiots", "actor":"Amir"})
+db.movie.insert({"empid":"5135"})
+db.products.insert( { _id: 10, item: "box", qty: 20 } )
+
+db.products.insert(
+   [
+     { _id: 11, item: "pencil", qty: 50, type: "no.2" },
+     { item: "pen", qty: 20 },
+     { item: "eraser", qty: 25 }
+   ]
+)
+
+db.products.insert( { item: "pen", qty: 20, "des" :{ item: "eraser", qty: 25 } })
+
+
+Creating explicit collections 
+----------------------------- 
+db.createCollection( "tempusers", 
+   { validator: { $and: 
+      [     
+		 { uname: {$type: "string"}},     
+         { phone: { $type: "string" } }, 
+         { email: { $regex: /@bookstore\.com$/ } }, 
+         { status: { $in: [ "Active", "InActive" ] } } 
+      ] 
+   } 
+} ) 
+ 
+ 
+//succeeds the opeartion, and just display warnings 
+db.createCollection( "temp1users", 
+   { 
+      validator: { $or: 
+         [ 
+            { uname: {$type: "string"}},     
+            { phone: { $type: "string" } }, 
+            { email: { $regex: /@bookstore\.com$/ } }, 
+            { status: { $in: [ "Active", "InActive" ] } } 
+         ] 
+      }, 
+      validationAction: "warn" 
+   } 
+) 
+
+db.createCollection( "temp1", 
+   { 
+      validator: { $jsonSchema: {
+		required:["username", "password"],
+		properties:{
+         username: {bsonType: "string"}
+         }
+	}      
+   } 
+   }
+) 
+
+db.createCollection( "contacts", {
+   validator: { $jsonSchema: {
+      bsonType: "object",
+      required: [ "phone" ],
+      properties: {
+         phone: {
+            bsonType: "string",
+            description: "must be a string and is required"
+         },
+         email: {
+            bsonType : "string",
+            pattern : "@mongodb\.com$",
+            description: "must be a string and match the regular expression pattern"
+         },
+         status: {
+            enum: [ "Unknown", "Incomplete" ],
+            description: "can only be one of the enum values"
+         }
+      }
+   } }
+} )
+
+db.temp1.insert( 
+{ 
+    first_name:"William", 
+    last_name: "Shakespeare", 
+    username: "william",
+	password:"xxxxxxxx",
+    phone: "+1 56498245", 
+    email: "william@bookstore.com", 
+})
+ 
+ 
+//Successfull insert 
+db.tempusers.insert( 
+{ 
+    first_name:"William", 
+    last_name: "Shakespeare", 
+    uname: "william", 
+    phone: "+1 56498245", 
+    email: "william@bookstore.com",   
+	status: "Active", 
+    address:  
+    { 
+        city:"Bangalore", 
+        pincode: "560049", 
+        state: "Karnataka", 
+        country: "india" 
+    } 
+}) 
+ 
+ 
+//Successful insert -- If you change the $or to $and, then this will be a failure attempt 
+db.tempusers.insert( 
+{ 
+    first_name:"Dan", 
+    last_name: "Brown", 
+    uname: "dan", 
+    phone: "+1 56498245", 
+    email: "dan@bookstore.com", 
+    status: "Something else" ,
+    address:  
+    { 
+        city:"Bangalore", 
+        pincode: "560001", 
+        state: "Karnataka", 
+        country: "india" 
+    } 
+}) 
+ 
+db.users.insert( 
+{ 
+    first_name:"Dan", 
+    last_name: "Brown", 
+    uname: "dan", 
+    phone: "+1 56498245", 
+    email: "dan@bookstore.com", 
+        status: "Something else", 
+    address:  
+    { 
+        city:"Bangalore", 
+        pincode: "560001",
+        state: "Karnataka", 
+        country: "india" 
+    } 
+}) 
+ 
+db.users.insert( 
+{ 
+    first_name:"Sidney", 
+    last_name: "Sheldon", 
+    uname: "sidney", 
+    phone: "+1 91357846", 
+    email: "sidney@bookstore.com", 
+    status: "Active" ,
+    address:  
+    { 
+        city:"Bangalore", 
+        pincode: "560001",
+        state: "Karnataka", 
+        country: "india" 
+    } 
+}) 
+
+db.auditlogs.insert( 
+{ 
+    _id:"2",
+	first_name:"Sidney", 
+    last_name: "Sheldon", 
+    uname: "sidney", 
+    phone: "+1 91357846", 
+    email: "sidney@bookstore.com", 
+    status: "Active" ,
+    address:  
+    { 
+        city:"Bangalore", 
+        pincode: "560001",
+        state: "Karnataka", 
+        country: "india" 
+    } 
+}) 
+ 
+ 
+Capped Collections 
+------------------ 
+ 
+Capped collections are fixed-size collections & insert and retrieve documents based on insertion order.  
+ 
+db.createCollection( "auditlogs", { capped: true, size: 1 } ) 
+ 
+Mainly used in the automatic removal of the documents, after reaching the specified size. 
+ 
+db.createCollection("auditlog", { capped : true, size : 2000, max : 5000 } ) 
+-> size - storage space
+-> max - count of documents
+-> size has the precedence over max
+ 
+Note : size is always mandatory
+ 
+
+Inserting Documents into Collections 
+-------------------------------------- 
+ 
+1) db.collection.insertOne  
+    -> inserts one document at any point of time 
+ 
+db.categories.insertOne( 
+   { 
+      name: "Web Development",
+      description: "All the books which has information on developing web applications" 
+   } 
+) 
+ 
+2) db.collection.insertMany 
+    -> inserts multiple documents at the same time 
+ 
+db.categories.insertMany( 
+[ 
+   { 
+      name: "Mobile - Hybrid App Development",
+      description: "All the books which has information on developing hybrid mobile app"           
+   }, 
+   { 
+      name: "Mobile - IOS Development", 
+      description: "All the books which has information on developing ios app"           
+   },     
+   { 
+      name: "Mobile - Android App Development",
+      description: "All the books which has information on developing android app"           
+   }, 
+   { 
+      name: "NoSQL Database",
+      description: "All the books which deals with the NoSQL database categories"           
+   } 
+] 
+) 
+-> to drop db.categories.drop()
+
+2.1) db.collection.insertMany with our own id
+    -> inserts multiple documents at the same time 
+ 
+db.categories.insertMany( 
+[ 
+   { 
+		_id:1,
+      name: "Mobile - Hybrid App Development",
+      description: "All the books which has information on developing hybrid mobile app"           
+   }, 
+   { 
+		_id:2,
+      name: "Mobile - IOS Development", 
+      description: "All the books which has information on developing ios app"           
+   },     
+   { 
+		_id:3,
+      name: "Mobile - Android App Development",
+      description: "All the books which has information on developing android app"           
+   },
+	{ 
+		_id:3,
+      name: "Mobile - Android App Development",
+      description: "All the books which has information on developing android app"           
+   }  , 
+   { 
+	_id:6,
+      name: "NoSQL Database",
+      description: "All the books which deals with the NoSQL database categories"           
+   } 
+] 
+) 
+ 
+3) db.collection.insert 
+    -> inserts single document or multiple documents 
+    -> returns a result which is of type BulkWriteResult 
+ 
+Importing from json file
+-------------------------------
+mongoimport --db <<db name>> --collection <<collection name>> --file <<json file name>>
+
+Updating an existing collection 
+------------------------------- 
+ 
+We can modify, fields of existing documents, or can replace the whole document itself, depending on the parameter we specify 
+ 
+Format 
+------ 
+ 
+db.collection.update( 
+   <query>, 
+   <update>, 
+   { 
+     upsert: <boolean>, 
+     multi: <boolean>, 
+     writeConcern: <document> -> will deal with this later 
+   } 
+) 
+ 
+<query> 
+    -> criteria to be matched 
+<update> 
+    -> the field, value pair to be updated 
+    -> upsert - indicates whether a new record to be inserted, in case the query is not able to find a matching record, default is false 
+    -> multi -  indicates whether multiple records can be updated or not, default is false 
+	->Write concern describes the level of acknowledgment requested from MongoDB for write operations to a standalone mongod or to replica sets or to sharded clusters.
+ 
+db.books.insert( 
+{ 
+    name: "MongoDB - The Definite Guide", 
+    description: "This book is split up into six sections, covering development, administration and deployment information", 
+    category: ObjectId("57c62e1a1fda343c983f245f"), 
+    authors: [{name: "Kristina Chodorow"}, {name: "Ann Spencer"}],  
+    tags: ["nosql","mongodb","document based db"], 
+    publisher: "oreilly", 
+    isbn: "978-93-5110-269-4", 
+    published_year: 2013, 
+    price: 780, 
+    no_of_pages : 424 
+} 
+) 
+ 
+db.books.insert( 
+{ 
+    name: "Pro ASP.NET MVC5", 
+    description: "Practical examples help to build maintainable, best performance web applications", 
+    category: ObjectId("57c62e1a1fda343c983f245f"), 
+    authors: [{name: "Adam Freeman"}], 
+    tags: ["mvc","aps.net","web application"],  
+    publisher: "apress", 
+    isbn: "978-81-322-3014-4", 
+        published_year: 2015, 
+    price: 990, 
+    no_of_pages : 600 
+} 
+) 
+ 
+db.books.insert( 
+{ 
+    name: "Pro AngularJs", 
+    description: "Learn to harness the power of modern web browsers", 
+    category: ObjectId("57c62e1a1fda343c983f245f"), 
+    authors: [{name: "Adam Freeman"}],  
+    tags: ["spa","javascript frameworks","web application"], 
+    publisher: "apress", 
+    isbn: "978-81-322-3096-0", 
+        published_year: 2016, 
+    price: 855, 
+    no_of_pages : 505 
+} 
+) 
+ 
+db.books.insert( 
+{ 
+    name: "Ionic in Action", 
+    description: "Hybrid mobile apps with Ionic and AngularJs", 
+    category: ObjectId("57c62eb01fda343c983f2460"), 
+    authors: [{name: "Jeremy Wilken"}],  
+    tags: ["angularjs","hybrid mobile app","open source"], 
+    publisher: "manning", 
+    isbn: "978-81-633-4300-82", 
+        published_year: 2016, 
+    price: 1070, 
+    no_of_pages : 230 
+} 
+) 
+ 
+ 
+Trying Update queries 
+--> upsert: true - like insert_update
+------------------- 
+Alter Collections
+--------------------------------------
+Collections do not describe or enforce the structure of its documents; i.e. there is no structural alteration at the collection level.
+However, at the document level, updateMany() operations can add fields to existing documents using the $set operator.
+
+db.books.updateMany(
+    { },
+    { $set: { purchase_date: new Date() } }
+)
+
+db.books.updateMany(
+{},
+
+{$set : { join_date: new Date() }})
+
+To remove field
+
+db.books.updateMany(
+    { },
+    { $unset: { "purchase_date": "" } }
+)
+
+The $rename operator updates the name of a field and has the following form:
+db.books.update({},{$rename:{"name":"bookname"}})
+db.users.update( { _id: "1" }, { $rename: { 'last_name': 'lname', 'first_name': 'fname' } } )
+Updation
+=========
+db.books.update( 
+   { name: "Ionic in Action" }, 
+   {  
+    newfield : 230 
+   }, 
+   { upsert: true } 
+) 
+ 
+db.books.update( 
+   { name: "Writing Modern Web Apps with the MEAN Stack" }, 
+   { 
+      name: "Writing Modern Web Apps with the MEAN Stack", 
+      category: ObjectId("57c62e1a1fda343c983f245f"), 
+      authors: [{name: "Jeff Dickey"}],  
+      tags: ["mean","nodejs","expressjs","open source"], 
+      publisher: "Apress", 
+      isbn: "978-0-13-393015-3", 
+      published_year: 2016, 
+      price: 3000, 
+      no_of_pages : 246     
+   }, 
+   { upsert: true } 
+) 
+ 
+db.books.update( 
+   { name: "Writing Modern Web Apps with the MEAN Stack" }, 
+   { 
+      tags: ["mean","nodejs","expressjs","open source", "full stack"],       
+   }, 
+   { upsert: false } 
+) 
+
+--> updateOne - update the first match
+--> updaetMany - update all
